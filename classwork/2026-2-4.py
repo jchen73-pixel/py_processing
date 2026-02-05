@@ -5,7 +5,8 @@ def draw():
     background(225)
     grid()
     displayCoordinates()
-    taijitu()
+    #taijitu()
+    moai()
     
 def taijitu():
     stroke_weight(2)
@@ -37,3 +38,38 @@ def grid():
 def displayCoordinates():
     fill(0)
     text(str(mouse_x) + ", " + str(mouse_y), 20, 20)
+
+def moai():
+    no_stroke()
+    fill(100)
+    rect(140, 160, 120, 140)
+    arc(200, 160, 120, 120, PI, TWO_PI)
+
+    # Head
+    stroke(0)
+    stroke_weight(4)
+    no_fill()
+    arc(200, 160, 120, 120, PI, TWO_PI) # Top
+    line(140, 160, 140, 300) # Left
+    line(260, 160, 260, 300) # Right
+    line(140, 300, 260, 300) # Bottom
+    
+    # Eyes
+    no_stroke()
+    fill(80) 
+    rect(140, 150, 120, 30)
+    
+    # Nose
+    fill(100)
+    stroke(0)
+    begin_shape()
+    vertex(180, 150)
+    vertex(220, 150)
+    vertex(230, 240)
+    vertex(170, 240)
+    end_shape()
+    line(170, 240, 180, 150)
+    
+    # Mouth
+    stroke_weight(3)
+    line(180, 270, 220, 270)
