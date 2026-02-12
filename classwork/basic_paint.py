@@ -1,26 +1,22 @@
 settings = {
-    "stroke" = 0,
-    "stroke_weight" = 0,
-    "fill" = 0
-    }
+  "stroke" : 0,
+  "stroke_weight" : 1,
+  "fill" : 0,
+  "mode": "free"
+}
 
 def setup():
-    size(400, 400)
-    background(220)
-    
+  size(400, 400)
+  background(220)
+
 def draw():
-    fill(0)
-    square(20, 20, 20)
-    fill(255, 0, 0)
-    square(50, 20, 20)
-    fill(0, 255, 0)
-    square(80, 20, 20)
-    fill(0, 0, 255)
-    square(110, 20, 20)
-    
+  stroke(settings["stroke"])
+  stroke_weight(settings["stroke_weight"])
+  fill(settings["fill"])
+
 
 def mouse_pressed():
-    if (collidePointRect(mouse_x, mouse_y, 20, 20, 40, 20)):
+  line(mouse_x, mouse_y, pmouse_x, pmouse_y)
         
     
 def collidePointRect(pX, pY, rX, rY, rW, rH):
