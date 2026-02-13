@@ -2,7 +2,7 @@
 defaultWid = 400
 defaultLen = 400
 defaultBack = 220
-commandAreaHeight = 60
+commandAreaHeight = 100
 
 # Color Squares Settings
 sqStartRow = 20
@@ -10,7 +10,7 @@ sqStartCol = 20
 sqRadius = 20
 colors = ["#000000", "#FF0000", "#FFA500", "#FFFF00", "#008000", "#0000FF", "#4B0082", "#FFFFFF"]
 sqSpacing = defaultWid / len(colors)
-
+shapes = []
 # User Modifiable Variables
 user = {
   "stroke_weight" : 1,
@@ -92,14 +92,54 @@ def draw():
       fill(colors[i])
       stroke(0)
       square(sqStartCol + i * sqSpacing, sqStartRow, sqRadius)
+  
+  # Draw Buttons
+  fill(0)
+  text_size(12)
+  text_align(CENTER, CENTER)
+  
+  # Clear Button
+  fill(255)
+  rect(20, 60, 60, 30)
+  fill(0)
+  text("Clear", 50, 75)
+  
+  # Free Mode Button (f)
+  if user["mode"] == "f":
+      fill(200) # Highlight
+  else:
+      fill(255)
+  rect(100, 60, 60, 30)
+  fill(0)
+  text("Free", 130, 75)
+  
+  # Circle Mode Button (c)
+  if user["mode"] == "c":
+      fill(200)
+  else:
+      fill(255)
+  rect(180, 60, 60, 30)
+  fill(0)
+  text("Circle", 210, 75)
 
 def mouse_pressed():
   # Handle UI clicks
   if mouse_y < commandAreaHeight:
-      for i in range(len(colors)):
-          if collidePointSquare(mouse_x, mouse_y, sqStartCol + i * sqSpacing, sqStartRow, sqRadius):
-              user["fill"] = colors[i]
-              break
+      # Handle Color Selection
+      if mouse_y >= sqStartRow and mouse_y <= sqStartRow + sqRadius:
+          for i in range(len(colors)):
+              if collidePointSquare(mouse_x, mouse_y, sqStartCol + i * sqSpacing, sqStartRow, sqRadius):
+                  user["fill"] = colors[i]
+                  break
+      
+      # Handle Button Clicks
+      elif mouse_y >= 60 and mouse_y <= 90:
+          if mouse_x >= 20 and mouse_x <= 80: # Clear
+              shapes[:] = []
+          elif mouse_x >= 100 and mouse_x <= 160: # Free
+              user["mode"] = "f"
+          elif mouse_x >= 180 and mouse_x <= 240: # Circle
+              user["mode"] = "c"
   
   # Handle Tool Start
   elif user["mode"] == "c":
