@@ -15,7 +15,14 @@ sqSpacing = defaultWid / len(colors)
 user = {
   "stroke_weight" : 1,
   "fill" : 0,
-  "mode": "free"
+  "mode": "f"
+}
+
+circ = {
+  "x": 0,
+  "y": 0,
+  "radius": 0,
+  "drawing": False
 }
 
 def setup():
@@ -23,6 +30,21 @@ def setup():
   background(defaultBack)
 
 def draw():
+  # clear screen/draw background
+  background(defaultBack)
+  
+  # Redraw all saved shapes
+  for shape_data in shapes:
+      if shape_data["type"] == "line":
+          stroke(shape_data["color"])
+          stroke_weight(shape_data["weight"])
+          line(shape_data["x1"], shape_data["y1"], shape_data["x2"], shape_data["y2"])
+      elif shape_data["type"] == "ellipse":
+          fill(shape_data["color"])
+          stroke(shape_data["color"])
+          stroke_weight(shape_data["weight"])
+          ellipse(shape_data["x"], shape_data["y"], shape_data["w"], shape_data["h"])
+
   # Reset for user actions
   fill(user["fill"])
   stroke(user["fill"])
@@ -37,13 +59,23 @@ def draw():
       user["mode"] = key
 
   if (is_mouse_pressed()):
-    if pmouse_y < commandAreaHeight:
-      for i in range(len(colors)):
-          if collidePointSquare(mouse_x, mouse_y, sqStartCol + i * sqSpacing, sqStartRow, sqRadius):
-              user["fill"] = colors[i]
-              break
-    if user["mode"] == "free":
+    if user["mode"] == "f" and mouse_y > commandAreaHeight and pmouse_y > commandAreaHeight:
+      # Append new line segment to history
+      new_line = {
+        "type": "line",
+        "x1": pmouse_x, "y1": pmouse_y,
+        "x2": mouse_x, "y2": mouse_y,
+        "color": user["fill"],
+        "weight": user["stroke_weight"]
+      }
+      shapes.append(new_line)
+      # Draw it immediately for this frame
       line(pmouse_x, pmouse_y, mouse_x, mouse_y)
+    
+    elif user["mode"] == "c" and circ["drawing"]:
+      # Draw circle preview (on main canvas, not pg)
+      r = dist(circ["x"], circ["y"], mouse_x, mouse_y)
+      ellipse(circ["x"], circ["y"], r*2, r*2)
 
   # Overlays commands
   no_stroke()
@@ -60,6 +92,34 @@ def draw():
       fill(colors[i])
       stroke(0)
       square(sqStartCol + i * sqSpacing, sqStartRow, sqRadius)
+
+def mouse_pressed():
+  # Handle UI clicks
+  if mouse_y < commandAreaHeight:
+      for i in range(len(colors)):
+          if collidePointSquare(mouse_x, mouse_y, sqStartCol + i * sqSpacing, sqStartRow, sqRadius):
+              user["fill"] = colors[i]
+              break
+  
+  # Handle Tool Start
+  elif user["mode"] == "c":
+      circ["x"] = mouse_x
+      circ["y"] = mouse_y
+      circ["drawing"] = True
+
+def mouse_released():
+  if user["mode"] == "c" and circ["drawing"]:
+      circ["drawing"] = False
+      # Finalize circle by adding to shapes list
+      r = dist(circ["x"], circ["y"], mouse_x, mouse_y)
+      new_circle = {
+        "type": "ellipse",
+        "x": circ["x"], "y": circ["y"],
+        "w": r*2, "h": r*2,
+        "color": user["fill"],
+        "weight": user["stroke_weight"]
+      }
+      shapes.append(new_circle)
       
   
 def collidePointSquare(pX, pY, x, y, r):
