@@ -1,14 +1,17 @@
+# Setup
 defaultWid = 400
 defaultLen = 400
 defaultBack = 220
+commandAreaHeight = 60
 
-# color squares setting
+# Color Squares Settings
 sqStartRow = 20
 sqStartCol = 20
 sqRadius = 20
-sqSpacing = 50
+colors = ["#000000", "#FF0000", "#FFA500", "#FFFF00", "#008000", "#0000FF", "#4B0082", "#FFFFFF"]
+sqSpacing = defaultWid / len(colors)
 
-# User modifiable variables
+# User Modifiable Variables
 user = {
   "stroke_weight" : 1,
   "fill" : 0,
@@ -20,32 +23,43 @@ def setup():
   background(defaultBack)
 
 def draw():
+  # Reset for user actions
   fill(user["fill"])
   stroke(user["fill"])
   stroke_weight(user["stroke_weight"])
 
   if (is_key_pressed()):
+    # Change stroke weight
     if (key in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]):
       user["stroke_weight"] = int(key)
-    elif (key in ["f", "r", "c"]):
+    # Change mode
+    elif (key in ["f", "r", "c"]): # free, rectangle, circle
       user["mode"] = key
 
-  # reset for permanent displays
-  stroke_weight(1)
-
-  # Auto creates rectangles for colors
-  #          Black      Red        Orange     Yellow     Green      Blue       Purple     White
-  colors = ["#000000", "#FF0000", "#FFA500", "#FFFF00", "#008000", "#0000FF", "#4B0082", "#FFFFFF"]
-  for clr in colors:
-      fill(clr)
-      stroke(clr)
-      square(sqStartRow + colors.index(clr) * sqSpacing, sqStartCol, sqRadius)
-
   if (is_mouse_pressed()):
-      if (mouse_y <= sqStartRow and mouse_y >= sqStartRow + sqRadius):
-          fill(255)
-          stroke_weight(5)
-          point(mouse_x, mouse_y)
+    if pmouse_y < commandAreaHeight:
+      for i in range(len(colors)):
+          if collidePointSquare(mouse_x, mouse_y, sqStartCol + i * sqSpacing, sqStartRow, sqRadius):
+              user["fill"] = colors[i]
+              break
+    if user["mode"] == "free":
+      line(pmouse_x, pmouse_y, mouse_x, mouse_y)
+
+  # Overlays commands
+  no_stroke()
+  fill(defaultBack)
+  rect(0, 0, width, commandAreaHeight)
+  
+  # Border line
+  stroke(0)
+  stroke_weight(1)
+  line(0, commandAreaHeight, width, commandAreaHeight)
+  
+  # Draw colors
+  for i in range(len(colors)):
+      fill(colors[i])
+      stroke(0)
+      square(sqStartCol + i * sqSpacing, sqStartRow, sqRadius)
       
   
 def collidePointSquare(pX, pY, x, y, r):
