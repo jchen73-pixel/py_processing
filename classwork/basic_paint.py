@@ -10,8 +10,9 @@ sqStartCol = 20
 sqRadius = 20
 colors = ["#000000", "#FF0000", "#FFA500", "#FFFF00", "#008000", "#0000FF", "#4B0082", "#FFFFFF"]
 sqSpacing = defaultWid / len(colors)
+
+# User Variables
 shapes = []
-# User Modifiable Variables
 user = {
   "stroke_weight" : 1,
   "fill" : 0,
@@ -39,7 +40,8 @@ def draw():
           stroke(shape_data["color"])
           stroke_weight(shape_data["weight"])
           line(shape_data["x1"], shape_data["y1"], shape_data["x2"], shape_data["y2"])
-      elif shape_data["type"] == "ellipse":
+        
+      elif shape_data["type"] == "circle":
           fill(shape_data["color"])
           stroke(shape_data["color"])
           stroke_weight(shape_data["weight"])
@@ -60,7 +62,6 @@ def draw():
 
   if (is_mouse_pressed()):
     if user["mode"] == "f" and mouse_y > commandAreaHeight and pmouse_y > commandAreaHeight:
-      # Append new line segment to history
       new_line = {
         "type": "line",
         "x1": pmouse_x, "y1": pmouse_y,
@@ -69,13 +70,29 @@ def draw():
         "weight": user["stroke_weight"]
       }
       shapes.append(new_line)
-      # Draw it immediately for this frame
       line(pmouse_x, pmouse_y, mouse_x, mouse_y)
     
-    elif user["mode"] == "c" and circ["drawing"]:
-      # Draw circle preview (on main canvas, not pg)
-      r = dist(circ["x"], circ["y"], mouse_x, mouse_y)
-      ellipse(circ["x"], circ["y"], r*2, r*2)
+    elif user["mode"] == "c":
+        if not circ["drawing"]:
+          circ["x"] = mouse_x
+          circ["y"] = mouse_y
+          point(circ["x"], circ["y"])
+          circ["drawing"] = True
+        else:
+          circ["drawing"] = False
+          r = dist(circ["x"], circ["y"], mouse_x, mouse_y)
+          new_circle = {
+            "type": "circle",
+            "x": circ["x"], "y": circ["y"],
+            "w": r*2, "h": r*2,
+            "color": user["fill"],
+            "weight": user["stroke_weight"]
+          }
+          shapes.append(new_circle)
+          circ["x"] = -1
+
+  if (circ["drawing"] and not circ["x"] == -1):
+      circle(circ["x"], circ["y"], dist(circ["x"], circ["y"], mouse_x, mouse_y) * 2)
 
   # Overlays commands
   no_stroke()
@@ -104,7 +121,7 @@ def draw():
   fill(0)
   text("Clear", 50, 75)
   
-  # Free Mode Button (f)
+  # Free Button (f)
   if user["mode"] == "f":
       fill(200) # Highlight
   else:
@@ -113,7 +130,7 @@ def draw():
   fill(0)
   text("Free", 130, 75)
   
-  # Circle Mode Button (c)
+  # Circle Button (c)
   if user["mode"] == "c":
       fill(200)
   else:
@@ -140,28 +157,7 @@ def mouse_pressed():
               user["mode"] = "f"
           elif mouse_x >= 180 and mouse_x <= 240: # Circle
               user["mode"] = "c"
-  
-  # Handle Tool Start
-  elif user["mode"] == "c":
-      circ["x"] = mouse_x
-      circ["y"] = mouse_y
-      circ["drawing"] = True
 
-def mouse_released():
-  if user["mode"] == "c" and circ["drawing"]:
-      circ["drawing"] = False
-      # Finalize circle by adding to shapes list
-      r = dist(circ["x"], circ["y"], mouse_x, mouse_y)
-      new_circle = {
-        "type": "ellipse",
-        "x": circ["x"], "y": circ["y"],
-        "w": r*2, "h": r*2,
-        "color": user["fill"],
-        "weight": user["stroke_weight"]
-      }
-      shapes.append(new_circle)
-      
-  
 def collidePointSquare(pX, pY, x, y, r):
   if pX >= x and pX <= x + r and pY >= y and pY <= y + r:
     return True
