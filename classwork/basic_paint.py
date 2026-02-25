@@ -26,6 +26,14 @@ circ = {
   "drawing": False
 }
 
+rectangle = {
+    "x1": 0,
+    "y1": 0,
+    "x2": 0,
+    "y2": 0,
+    "drawing": False
+}
+
 def setup():
   size(defaultWid, defaultLen)
   background(defaultBack)
@@ -36,16 +44,19 @@ def draw():
   
   # Redraw all saved shapes
   for shape_data in shapes:
+      fill(shape_data["color"])
+      stroke(shape_data["color"])
+      stroke_weight(shape_data["weight"])
       if shape_data["type"] == "line":
-          stroke(shape_data["color"])
-          stroke_weight(shape_data["weight"])
           line(shape_data["x1"], shape_data["y1"], shape_data["x2"], shape_data["y2"])
         
       elif shape_data["type"] == "circle":
-          fill(shape_data["color"])
-          stroke(shape_data["color"])
-          stroke_weight(shape_data["weight"])
           ellipse(shape_data["x"], shape_data["y"], shape_data["w"], shape_data["h"])
+      
+      elif shape_data["type"] == "rect":
+          w = shape_data["x2"] - shape_data["x1"]
+          h = shape_data["y2"] - shape_data["y1"]
+          rect(shape_data["x1"], shape_data["y1"], w, h)
 
   # Reset for user actions
   fill(user["fill"])
@@ -91,8 +102,29 @@ def draw():
           shapes.append(new_circle)
           circ["x"] = -1
 
+    elif user["mode"] == "r":
+        if not rectangle["drawing"]:
+          rectangle["x1"] = mouse_x
+          rectangle["y1"] = mouse_y
+          rectangle["drawing"] = True
+        else:
+          rectangle["drawing"] = False
+          
+          new_rect = {
+            "type": "rect",
+            "x1": rectangle["x1"], "y1": rectangle["y1"],
+            "x2": rectangle["x2"], "y2": rectangle["y2"],
+            "color": user["fill"],
+            "weight": user["stroke_weight"]
+          }
+          shapes.append(new_rect)
+          rectangle["x1"] = -1
+
   if (circ["drawing"] and not circ["x"] == -1):
       circle(circ["x"], circ["y"], dist(circ["x"], circ["y"], mouse_x, mouse_y) * 2)
+      
+  if (rectangle["drawing"] and not rectangle["x1"] == -1):
+      rect(rectangle["x1"], rectangle["y1"], mouse_x - rectangle["x1"], mouse_y - rectangle["y1"])
 
   # Overlays commands
   no_stroke()
