@@ -82,43 +82,6 @@ def draw():
       }
       shapes.append(new_line)
       line(pmouse_x, pmouse_y, mouse_x, mouse_y)
-    
-    elif user["mode"] == "c":
-        if not circ["drawing"]:
-          circ["x"] = mouse_x
-          circ["y"] = mouse_y
-          point(circ["x"], circ["y"])
-          circ["drawing"] = True
-        else:
-          circ["drawing"] = False
-          r = dist(circ["x"], circ["y"], mouse_x, mouse_y)
-          new_circle = {
-            "type": "circle",
-            "x": circ["x"], "y": circ["y"],
-            "w": r*2, "h": r*2,
-            "color": user["fill"],
-            "weight": user["stroke_weight"]
-          }
-          shapes.append(new_circle)
-          circ["x"] = -1
-
-    elif user["mode"] == "r":
-        if not rectangle["drawing"]:
-          rectangle["x1"] = mouse_x
-          rectangle["y1"] = mouse_y
-          rectangle["drawing"] = True
-        else:
-          rectangle["drawing"] = False
-          
-          new_rect = {
-            "type": "rect",
-            "x1": rectangle["x1"], "y1": rectangle["y1"],
-            "x2": rectangle["x2"], "y2": rectangle["y2"],
-            "color": user["fill"],
-            "weight": user["stroke_weight"]
-          }
-          shapes.append(new_rect)
-          rectangle["x1"] = -1
 
   if (circ["drawing"] and not circ["x"] == -1):
       circle(circ["x"], circ["y"], dist(circ["x"], circ["y"], mouse_x, mouse_y) * 2)
@@ -171,6 +134,15 @@ def draw():
   fill(0)
   text("Circle", 210, 75)
 
+  # Rectangle Button (r)
+  if user["mode"] == "r":
+      fill(200)
+  else:
+      fill(255)
+  rect(260, 60, 60, 30)
+  fill(0)
+  text("Rect", 290, 75)
+
 def mouse_pressed():
   # Handle UI clicks
   if mouse_y < commandAreaHeight:
@@ -189,6 +161,42 @@ def mouse_pressed():
               user["mode"] = "f"
           elif mouse_x >= 180 and mouse_x <= 240: # Circle
               user["mode"] = "c"
+          elif mouse_x >= 260 and mouse_x <= 320: # Rectangle
+              user["mode"] = "r"
+  else:
+      if user["mode"] == "c":
+          if not circ["drawing"]:
+              circ["x"] = mouse_x
+              circ["y"] = mouse_y
+              circ["drawing"] = True
+          else:
+              circ["drawing"] = False
+              r = dist(circ["x"], circ["y"], mouse_x, mouse_y)
+              new_circle = {
+                  "type": "circle",
+                  "x": circ["x"], "y": circ["y"],
+                  "w": r*2, "h": r*2,
+                  "color": user["fill"],
+                  "weight": user["stroke_weight"]
+              }
+              shapes.append(new_circle)
+              circ["x"] = -1
+      elif user["mode"] == "r":
+          if not rectangle["drawing"]:
+              rectangle["x1"] = mouse_x
+              rectangle["y1"] = mouse_y
+              rectangle["drawing"] = True
+          else:
+              rectangle["drawing"] = False
+              new_rect = {
+                  "type": "rect",
+                  "x1": rectangle["x1"], "y1": rectangle["y1"],
+                  "x2": mouse_x, "y2": mouse_y,
+                  "color": user["fill"],
+                  "weight": user["stroke_weight"]
+              }
+              shapes.append(new_rect)
+              rectangle["x1"] = -1
 
 def collidePointSquare(pX, pY, x, y, r):
   if pX >= x and pX <= x + r and pY >= y and pY <= y + r:
