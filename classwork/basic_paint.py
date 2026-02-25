@@ -8,6 +8,7 @@ commandAreaHeight = 100
 sqStartRow = 20
 sqStartCol = 20
 sqRadius = 20
+#          Black      Red        Orange     Yellow     Green      Blue       Purple     White
 colors = ["#000000", "#FF0000", "#FFA500", "#FFFF00", "#008000", "#0000FF", "#4B0082", "#FFFFFF"]
 sqSpacing = defaultWid / len(colors)
 
