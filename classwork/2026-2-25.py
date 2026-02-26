@@ -6,6 +6,7 @@ def setup():
     size(600, 600)
     background(0)
     stroke(255)
+    frame_rate(10)
     gen_star()
     #global randomColors, randomChoice
     #randomColors = [
@@ -33,15 +34,11 @@ def draw():
     #randomChoice = int(random(len(randomColors)))
 
 def gen_star():
-    for i in range(1, 2000, 1):
-        x = int(random(width))
-        y = int(random(height))
+    for i in range(1, 3000, 1):
         global stars
-        new_star = {
-            "x": x,
-            "y": y,
+        stars.append( {
+            "x": int(random(width)),
+            "y": int(random(height)),
             "color": color(int(random(255)), int(random(255)), int(random(255))),
             "stroke_weight": int(random(3))
-        }
-        stars.append(new_star)
-
+        })
