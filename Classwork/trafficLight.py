@@ -1,5 +1,3 @@
-
-
 def setup():
     size(400, 400)
     fill(200)
