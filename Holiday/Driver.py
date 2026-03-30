@@ -1,15 +1,29 @@
 from Tile import *
+import time
 tiles = []
+delay = 0
+sinceLast = 0
 def setup():
     global a
     size(600, 600)
-    genTiles()
-    a = Tile(200, 200, 1, 0, 0, "A")
-    a.display()
+
 def draw():
+    global sinceLast
+    global delay
     background(225)
-    a.animate()
-def genTiles():
-    for i in range(200):
-        direction = ["left", "right"]
-        tiles.append(Tile(random(0, width), 0, 1, random.choice(direction), 0, "A"))
+    if len(tiles) < 200:
+        if sinceLast < delay:
+            sinceLast+=1
+        else:
+            sinceLast = 0
+            delay = random(25,50)
+            genTile()
+    for tile in tiles:
+        if tile.checkDead():
+            tiles.remove(tile)
+        else:
+            tile.display()
+    
+def genTile():
+    direction = ["left", "right"]
+    tiles.append(Tile(random(0, width), -50, 1, direction[int(random(0, 2))], 0, "A"))
