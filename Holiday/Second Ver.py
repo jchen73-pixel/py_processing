@@ -27,13 +27,11 @@ def setup():
     global wordle_words, target_word
     size(600, 750)
     text_align(CENTER, CENTER)
-
     try:
         font = create_font("Helvetica", 48)
         text_font(font)
     except:
         pass
-
     with open("words.txt", "r") as file:
         content = file.read()
         wordle_words = content.split("\n")
@@ -44,7 +42,6 @@ def setup():
 def draw():
     global tile_timer, tile_delay, message_timer
     background(BG_COLOR[0], BG_COLOR[1], BG_COLOR[2])
-
     if len(falling_tiles) < 120:
         if tile_timer < tile_delay:
             tile_timer += 1
@@ -52,19 +49,16 @@ def draw():
             tile_timer = 0
             tile_delay = random(20, 45)
             genTile()
-    
     for tile in falling_tiles:
         if tile.checkDead():
             falling_tiles.remove(tile)
         else:
             tile.checkHover(mouse_x, mouse_y)
             tile.display()
-    
     # dark layer between tiles and wordle to look nicer
     no_stroke()
     fill(18, 18, 19, 180)
     rect(0, 0, width, height)
-
     drawTitle()
     drawWordleGrid()
     drawKeyboard()
@@ -133,7 +127,6 @@ def drawWordleGrid():
                 rect(x, y, 46, 46, 5)
                 no_stroke()
 
-
 keyboard = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"]
 key_colors = {}
 
@@ -145,19 +138,9 @@ def drawKeyboard():
             row_width += 76 # extra space for enter and backspace
         start_x = (width - row_width) / 2.0
         y = 500 + 46 * r
-        if r == 2: # enter key
-            c = DARK_GRAY
-            fill(c[0], c[1], c[2])
-            no_stroke()
-            rect(start_x, y, 36, 42, 5)
-            fill(255, 255, 255, 220)
-            text_size(9)
-            text_align(CENTER, CENTER)
-            text("ENT", start_x + 18, y + 21)
-            letter_start = start_x + 38
-        else:
-            letter_start = start_x
-
+        letter_start = start_x
+        if r == 2:
+            letter_start += 38
         for i in range(len(row_str)):
             char = row_str[i]
             key_x = letter_start + i * 38
@@ -173,18 +156,6 @@ def drawKeyboard():
             text_align(CENTER, CENTER)
             text(char, key_x + 17, y + 21)
 
-        if r == 2: # backspace key
-            backspace_x = letter_start + len(row_str) * 38
-            colr = DARK_GRAY
-            fill(colr[0], colr[1], colr[2])
-            no_stroke()
-            rect(backspace_x, y, 36, 42, 5)
-            fill(255, 255, 255, 220)
-            text_size(12)
-            text_align(CENTER, CENTER)
-            text("⌫", backspace_x + 18, y + 21)
-
-
 def drawMessage():
     fill(255, 255, 255, 230)
     no_stroke()
@@ -195,9 +166,8 @@ def drawMessage():
     text_align(CENTER, CENTER)
     text(message, width / 2, 163)
 
-
 def evaluateGuess(guess, target):
-    result = ["gray"] * 5
+    result = ["gray", "gray", "gray", "gray", "gray"]
     target_chars = list(target)
     for i in range(5):
         if guess[i] == target[i]:
@@ -210,7 +180,6 @@ def evaluateGuess(guess, target):
             result[i] = "yellow"
             target_chars[target_chars.index(guess[i])] = None
     return result
-
 
 def updateKeyColors(guess, result):
     priority = {"green": 3, "yellow": 2, "gray": 1}
@@ -238,7 +207,6 @@ def updateKeyColors(guess, result):
 def key_pressed():
     global current_guess, game_over, game_won
     global message, message_timer, target_word
-
     if game_over:
         if key == ENTER:
             resetGame()
@@ -256,7 +224,6 @@ def key_pressed():
 def submitGuess():
     global current_guess, game_over, game_won
     global message, message_timer
-
     if len(current_guess) < 5:
         message = "Not enough letters"
         message_timer = 90
@@ -271,7 +238,6 @@ def submitGuess():
     guess_results.append(result)
     updateKeyColors(guess, result)
     current_guess = ""
-
     if guess == target_word:
         game_won = True
         game_over = True
@@ -281,7 +247,6 @@ def submitGuess():
         game_over = True
         message = "The word was: " + target_word
         message_timer = 500
-
 
 def resetGame():
     global target_word, guesses, guess_results, current_guess
@@ -295,7 +260,6 @@ def resetGame():
     message = ""
     message_timer = 0
     key_colors.clear()
-
 
 def genTile():
     letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
