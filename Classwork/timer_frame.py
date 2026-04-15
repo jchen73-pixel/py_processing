@@ -9,7 +9,8 @@ def draw():
     #text(str(mouse_x) + ", " + str(mouse_y), 20, 20)
     
     '''
-    while (timer > 0):  // this doesn't work because it's all happening at the same time
+    #this doesn't work because it's all happening at the same time
+    while (timer > 0): 
      timer += 1
     '''
     fill(0)

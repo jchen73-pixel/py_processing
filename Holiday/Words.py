@@ -15,14 +15,11 @@ BG_COLOR = color(18, 18, 19)
 def setup():
     size(600, 750)
     text_align(CENTER, CENTER)
-    try:
-        font = create_font("Helvetica", 48)
-        text_font(font)
-    except:
-        pass
+    font = create_font("Helvetica", 48)
+    text_font(font)
 
 def draw():
-    global tile_timer, tile_delay, message_timer
+    global tile_timer, tile_delay
     background(BG_COLOR)
     if len(falling_tiles) < 120:
         if tile_timer < tile_delay:
@@ -72,7 +69,6 @@ def drawWordleGrid():
             rect(x, y, 46, 46, 5)
 
 keyboard = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"]
-key_colors = {}
 
 def drawKeyboard():
     for r in range(len(keyboard)):
@@ -88,11 +84,7 @@ def drawKeyboard():
         for i in range(len(row_str)):
             char = row_str[i]
             key_x = letter_start + i * 38
-            if char in key_colors:
-                colr = key_colors[char]
-            else:
-                colr = DARK_GRAY
-            fill(colr)
+            fill(DARK_GRAY)
             no_stroke()
             rect(key_x, y, 34, 42, 5)
             fill(255, 255, 255, 230)
