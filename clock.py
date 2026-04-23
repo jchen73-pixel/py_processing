@@ -81,9 +81,9 @@ def checkTime():
             if ones > 0:
                 secOnes = list(numbers[ones])
 
-def draw_row(pattern, active, x, y):
-    for i in range(len(pattern)):
-        char = pattern[i]
+def draw_row(active, x, y):
+    for i in range(len(masterList)):
+        char = masterList[i]
         if i in active:
             fill(255, 170, 0)
         else:
@@ -108,13 +108,13 @@ def displayTime():
         text("P", 325, 500)
         fill(255, 170, 0)
         text("A", 350, 500)
-    draw_row(masterList, hourNow, 25, 100)
-    draw_row(masterList, minTens, 25, 150)
-    draw_row(masterList, minOnes, 25, 200)
-    draw_row(masterList, minTeens, 25, 250)
-    draw_row(masterList, secTens, 25, 350)
-    draw_row(masterList, secOnes, 25, 400)
-    draw_row(masterList, secTeens, 25, 450)
+    draw_row(hourNow, 25, 100)
+    draw_row(minTens, 25, 150)
+    draw_row(minOnes, 25, 200)
+    draw_row(minTeens, 25, 250)
+    draw_row(secTens, 25, 350)
+    draw_row(secOnes, 25, 400)
+    draw_row(secTeens, 25, 450)
 
 def setup():
     size(700, 600) 
