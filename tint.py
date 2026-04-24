@@ -12,25 +12,19 @@ def setup():
     no_loop()
 
 def draw():
-    for i in range(width // 2):
-        for j in range(height // 2):
-            origRed = red(get_pixels(i, j))
-            origGreen = green(get_pixels(i, j))
-            origBlue = blue(get_pixels(i, j))
-            fill(origRed * 0.25, origGreen * 0.25, origBlue * 0.25)
-            square(i,j,1)
-    for i in range(width // 2):
-        for j in range(height // 2):
-            origRed = red(get_pixels(i, j + height // 2))
-            origGreen = green(get_pixels(i, j + height // 2))
-            origBlue = blue(get_pixels(i, j + height // 2))
-            fill(origRed * 0.5, origGreen * 0.5, origBlue * 0.5)
-            square(i,j + height // 2,1)
-    for i in range(width // 2):
-        for j in range(height // 2):
-            origRed = red(get_pixels(i + width // 2, j + width // 2))
-            origGreen = green(get_pixels(i + width // 2, j + width // 2))
-            origBlue = blue(get_pixels(i + width // 2, j + width // 2))
-            fill(origRed * 0.75, origGreen * 0.75, origBlue * 0.75)
-            square(i + width // 2,j + height // 2,1)
-    update_pixels()
+    background(255)
+    for i in range(width):
+        for j in range(height):
+            c = pixelList[str(i) + "," + str(j)]
+            origRed = red(c)
+            origGreen = green(c)
+            origBlue = blue(c)
+            if i < width // 2 and j < height // 2:
+                fill(origRed, origGreen, origBlue, 255)
+            elif i >= width // 2 and j < height // 2:
+                fill(origRed, origGreen * 0.5, origBlue * 0.5, 191)
+            elif i < width // 2 and j >= height // 2:
+                fill(origRed * 0.5, origGreen, origBlue * 0.5, 127)
+            else:
+                fill(origRed * 0.5, origGreen * 0.5, origBlue, 64)
+            square(i, j, 1)
