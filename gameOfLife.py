@@ -56,11 +56,9 @@ def evaluate_neighbors():
 
 def transition():
     global p
-    for x in range(width):
-        for y in range(height):
-            np_pixels[x,y,1] = p[y][x][1]
-            np_pixels[x,y,2] = p[y][x][2]
-            np_pixels[x,y,3] = p[y][x][3]
+    for y in range(height):
+        for x in range(width):
+            np_pixels[y, x, :] = p[y][x] 
     update_np_pixels()
     
 def draw():
