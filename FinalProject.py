@@ -1,5 +1,15 @@
+# Skill 1 Drawing Functions - line 164
+# Skill 2 Controlling Color State - line 421
+# Skill 3 Using Colors - line 418
+# Skill 4 Working with setup and draw - line 513
+# Skill 5 Events - line 531
+# Skill 9 Moving shapes - waived
+# Skill 10 Creating and using classes - line 60
+# Skill 11 Using transformations - line 83
+# Skill 12 Using pixels - line 383
+
 import numpy as np
-from math import sin, cos, hypot, atan2
+from math import sin, cos, hypot, atan2 #arctan of y/x in radians
 
 WIDTH, HEIGHT = 800, 1000
 BALL_RADIUS = 14
@@ -7,10 +17,10 @@ GRAVITY = 0.42
 JUMP_VELOCITY = -8.5
 SPACING = 620 # between obstacles
 
-CYAN   = (0, 231, 231)
+CYAN = (0, 231, 231)
 YELLOW = (255, 210, 0)
 PURPLE = (170, 70, 235)
-PINK   = (255, 75, 160)
+PINK = (255, 75, 160)
 GAME_COLORS = [CYAN, YELLOW, PURPLE, PINK]
 
 BAR_WIDTH = 460
@@ -34,11 +44,11 @@ player_vy = 0.0 # vertical velocity. positive is down
 player_color = 0 # index for GAME_COLORS
 
 camera_y = 0.0 # world-y of the top of the visible area
-spawn_y  = 0.0 # world-y where the next obstacle will be placed
+spawn_y = 0.0 # world-y where the next obstacle will be placed
 
 obstacles = []
-changers  = []
-ball_img  = None
+changers = []
+ball_img = None
 
 # return random color index that is different from current color
 def random_other_color(current_color):
@@ -47,6 +57,7 @@ def random_other_color(current_color):
         new_color = int(random(4))
     return new_color
 
+# Skill 10 Creating and using classes
 class ColorChanger:
     def __init__(self, x, y):
         self.x = x
@@ -69,20 +80,21 @@ class ColorChanger:
         if self.used:
             return
         tile_size = self.radius
+        # Skill 11 Using transformations
         push_matrix()
         translate(self.x, self.y)
         no_stroke()
-        red, green, blue = CYAN
-        fill(red, green, blue)
+        r, g, b = CYAN
+        fill(r, g, b)
         square(-tile_size, -tile_size, tile_size)
-        red, green, blue = YELLOW
-        fill(red, green, blue)
+        r, g, b = YELLOW
+        fill(r, g, b)
         square(0, -tile_size, tile_size)
-        red, green, blue = PURPLE
-        fill(red, green, blue)
+        r, g, b = PURPLE
+        fill(r, g, b)
         square(-tile_size, 0, tile_size)
-        red, green, blue = PINK
-        fill(red, green, blue)
+        r, g, b = PINK
+        fill(r, g, b)
         square(0, 0, tile_size)
         stroke(255)
         stroke_weight(4)
@@ -147,8 +159,9 @@ class Obstacle:
         no_fill()
         stroke_weight(18)
         for segment_index in range(4):
-            red, green, blue = GAME_COLORS[segment_index]
-            stroke(red, green, blue)
+            r, g, b = GAME_COLORS[segment_index]
+            stroke(r, g, b)
+            # Skill 1: Drawing Functions
             arc(0, 0, 260, 260, segment_index * HALF_PI, (segment_index + 1) * HALF_PI) # quarter circle arcs of different color
 
     def draw_cross(self):
@@ -160,16 +173,16 @@ class Obstacle:
         for arm_index in range(4):
             push_matrix()
             rotate(arm_index * HALF_PI)
-            red, green, blue = GAME_COLORS[arm_index]
-            fill(red, green, blue)
+            r, g, b = GAME_COLORS[arm_index]
+            fill(r, g, b)
             rect(arm_inner_radius, -arm_width / 2, arm_outer_radius - arm_inner_radius, arm_width)
             pop_matrix()
 
     def draw_doublecross(self):
         color_sequence  = [0, 1, 2, 3]
-        mirrored_colors = [color_sequence[2], color_sequence[1], color_sequence[0], color_sequence[3]]
+        mirror_colors = [color_sequence[2], color_sequence[1], color_sequence[0], color_sequence[3]]
         self.draw_one_cross(-130, -self.rotation, color_sequence)
-        self.draw_one_cross( 130,  self.rotation, mirrored_colors)
+        self.draw_one_cross( 130,  self.rotation, mirror_colors)
         
     def draw_one_cross(self, x_offset, rotation, color_map):
         # used by doublecross
@@ -183,8 +196,8 @@ class Obstacle:
         for arm_index in range(4):
             push_matrix()
             rotate(arm_index * HALF_PI)
-            red, green, blue = GAME_COLORS[color_map[arm_index]]
-            fill(red, green, blue)
+            r, g, b = GAME_COLORS[color_map[arm_index]]
+            fill(r, g, b)
             rect(arm_inner_radius, -arm_width / 2, arm_outer_radius - arm_inner_radius, arm_width)
             pop_matrix()
         pop_matrix()
@@ -193,25 +206,25 @@ class Obstacle:
         segment_width = BAR_WIDTH / 4
         no_stroke()
         for segment_index in range(4):
-            red, green, blue = GAME_COLORS[segment_index]
-            fill(red, green, blue)
+            r, g, b = GAME_COLORS[segment_index]
+            fill(r, g, b)
             rect(-BAR_WIDTH / 2 + segment_index * segment_width, -BAR_HEIGHT / 2, segment_width, BAR_HEIGHT)
 
     def draw_square(self):
         rotate(self.rotation)
         half_side = 125
         stroke_weight(16)
-        red, green, blue = PINK
-        stroke(red, green, blue)
+        r, g, b = PINK
+        stroke(r, g, b)
         line(-half_side, -half_side, half_side, -half_side) # top
-        red, green, blue = CYAN
-        stroke(red, green, blue)
+        r, g, b = CYAN
+        stroke(r, g, b)
         line(half_side, -half_side, half_side, half_side) # right
-        red, green, blue = YELLOW
-        stroke(red, green, blue)
+        r, g, b = YELLOW
+        stroke(r, g, b)
         line(half_side, half_side, -half_side, half_side) # bottom
-        red, green, blue = PURPLE
-        stroke(red, green, blue)
+        r, g, b = PURPLE
+        stroke(r, g, b)
         line(-half_side, half_side, -half_side, -half_side) # left
 
 # return the shortest distance from a point to a line segment
@@ -220,7 +233,7 @@ def point_segment_distance(point_x, point_y, seg_x1, seg_y1, seg_x2, seg_y2):
     delta_y = seg_y2 - seg_y1
     if delta_x == 0 and delta_y == 0: # horizontal or vertical line
         return hypot(point_x - seg_x1, point_y - seg_y1)
-    # Project point onto the segment and clamp to [0, 1] so we stay on it
+    # project point onto the segment and clamp to [0, 1] so we stay on it
     projection = max(0, min(1, ((point_x - seg_x1) * delta_x + (point_y - seg_y1) * delta_y)
                                / float(delta_x * delta_x + delta_y * delta_y)))
     nearest_x = seg_x1 + projection * delta_x
@@ -258,10 +271,10 @@ def orb_hits_obstacle():
             local_x = (ball_x - obstacle.x) * cos(neg_rotation) - (ball_y - obstacle.y) * sin(neg_rotation)
             local_y = (ball_x - obstacle.x) * sin(neg_rotation) + (ball_y - obstacle.y) * cos(neg_rotation)
             square_sides = [
-                ((-125, -125), ( 125, -125), 3),   # top    → pink
-                (( 125, -125), ( 125,  125), 0),   # right  → cyan
-                (( 125,  125), (-125,  125), 1),   # bottom → yellow
-                ((-125,  125), (-125, -125), 2),   # left   → purple
+                ((-125, -125), ( 125, -125), 3), # top: pink
+                (( 125, -125), ( 125,  125), 0), # right: cyan
+                (( 125,  125), (-125,  125), 1), # bottom: yellow
+                ((-125,  125), (-125, -125), 2), # left: purple
             ]
             for side_start, side_end, side_color_index in square_sides:
                 distance = point_segment_distance(local_x, local_y,
@@ -272,7 +285,7 @@ def orb_hits_obstacle():
                         return True
 
         elif obstacle.kind == "cross":
-            # Rotate into the cross's local frame, then test each arm separately
+            # rotate then check each arm
             neg_rotation = -obstacle.rotation
             local_x = (ball_x - obstacle.x) * cos(neg_rotation) - (ball_y - obstacle.y) * sin(neg_rotation)
             local_y = (ball_x - obstacle.x) * sin(neg_rotation) + (ball_y - obstacle.y) * cos(neg_rotation)
@@ -286,11 +299,11 @@ def orb_hits_obstacle():
 
         elif obstacle.kind == "doublecross":
             color_sequence  = [0, 1, 2, 3]
-            mirrored_colors = [2, 1, 0, 3]
-            # The doublecross is two crosses side by side; check each one
+            mirror_colors = [2, 1, 0, 3]
+            # check both crosses
             cross_configs = (
                 (obstacle.x - 130, -obstacle.rotation, color_sequence),
-                (obstacle.x + 130,  obstacle.rotation, mirrored_colors),
+                (obstacle.x + 130,  obstacle.rotation, mirror_colors),
             )
             for cross_center_x, cross_rotation, color_map in cross_configs:
                 neg_rotation = -cross_rotation
@@ -312,7 +325,7 @@ def make_obstacle(y):
 
 
 def fill_world():
-    # spawns obstacles on screen
+    # generates obstacles into array
     global spawn_y
     while spawn_y > camera_y - 300:
         make_obstacle(spawn_y)
@@ -356,28 +369,29 @@ def make_ball_image():
     img = create_image(diameter, diameter, ARGB)
     img.load_np_pixels()
 
-    radius_squared = BALL_RADIUS * BALL_RADIUS
+    radius_squar = BALL_RADIUS * BALL_RADIUS
 
-    # Loop over every pixel and set alpha to 255 if inside the circle, 0 if outside
+    # create ball image
     for row in range(diameter):
         for col in range(diameter):
             dist_from_center_sq = (col - BALL_RADIUS) * (col - BALL_RADIUS) + \
                                   (row - BALL_RADIUS) * (row - BALL_RADIUS)
-            if dist_from_center_sq <= radius_squared:
+            if dist_from_center_sq <= radius_squar:
                 img.np_pixels[row, col, 0] = 255 # alpha
             else:
                 img.np_pixels[row, col, 0] = 0
-            img.np_pixels[row, col, 1] = 255  # red
-            img.np_pixels[row, col, 2] = 255  # green
-            img.np_pixels[row, col, 3] = 255  # blue
+            # Skill 12 Using pixels
+            img.np_pixels[row, col, 1] = 255  # r
+            img.np_pixels[row, col, 2] = 255  # g
+            img.np_pixels[row, col, 3] = 255  # b
 
     img.update_np_pixels()
     return img
 
 
 def draw_player():
-    red, green, blue = GAME_COLORS[player_color]
-    tint(red, green, blue)
+    r, g, b = GAME_COLORS[player_color]
+    tint(r, g, b)
     diameter = 2 * BALL_RADIUS
     image(ball_img, player_x - BALL_RADIUS, player_y - BALL_RADIUS, diameter, diameter)
     no_tint()
@@ -387,12 +401,11 @@ def draw_hud():
     text_size(26)
     text_align(LEFT, TOP)
     text("Score: " + str(score), 18, 16)
-    text("High: "  + str(high_score), 18, 48)
+    text("High: " + str(high_score), 18, 48)
     no_stroke()
-    red, green, blue = GAME_COLORS[player_color]
-    fill(red, green, blue)
+    r, g, b = GAME_COLORS[player_color]
+    fill(r, g, b)
     ellipse(WIDTH - 42, 36, 34, 34)
-
 
 def draw_title(center_x, center_y):
     label = "COLOR JUMP"
@@ -402,13 +415,14 @@ def draw_title(center_x, center_y):
         total_text_width += text_width(character)
     current_x = center_x - total_text_width / 2
     text_align(LEFT, CENTER)
-    color_mode(HSB, 360, 100, 100)    # Skill 3 using colors
+    # Skill 3 Using Colors
+    color_mode(HSB, 360, 100, 100)
     for char_index, character in enumerate(label):
+        # Skill 2 Controlling Color State
         fill(char_index * 360 / len(label), 85, 100)
         text(character, current_x, center_y)
         current_x += text_width(character)
     color_mode(RGB, 255)
-
 
 def draw_start():
     background(0)
@@ -417,7 +431,6 @@ def draw_start():
     fill(255)
     text_size(30)
     text("Press SPACE to Start", WIDTH / 2, HEIGHT / 2 + 40)
-
 
 def draw_over():
     background(0)
@@ -497,7 +510,7 @@ def draw_play():
 
     draw_hud()
 
-# Skill 4 working with setup and draw
+# Skill 4 Working with setup and draw
 def setup():
     global ball_img
     size(WIDTH, HEIGHT)
@@ -505,7 +518,6 @@ def setup():
     text_align(CENTER, CENTER)
     ball_img = make_ball_image()
     reset_game()
-
 
 def draw():
     if state == "start":
@@ -516,8 +528,7 @@ def draw():
     else:
         draw_over()
 
-
-# Skill 5 mouse events
+# Skill 5 Events
 def key_pressed():
     if state == "start" and key == ' ':
         start_game()
@@ -525,7 +536,6 @@ def key_pressed():
         do_jump()
     elif state == "over" and (key == 'r' or key == 'R'):
         start_game()
-
 
 def mouse_pressed():
     if state == "play":
