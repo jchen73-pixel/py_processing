@@ -1,111 +1,115 @@
 # Skill 1 Drawing Functions - line 164
-# Skill 2 Controlling Color State - line 421
-# Skill 3 Using Colors - line 418
-# Skill 4 Working with setup and draw - line 513
-# Skill 5 Events - line 531
+# Skill 2 Controlling Color State - line 304
+# Skill 3 Using Colors - line 301
+# Skill 4 Working with setup and draw - line 63
+# Skill 5 Events - line 371
 # Skill 9 Moving shapes - waived
-# Skill 10 Creating and using classes - line 60
-# Skill 11 Using transformations - line 83
-# Skill 12 Using pixels - line 383
+# Skill 10 Creating and using classes - line 86
+# Skill 11 Using transformations - line 141
+# Skill 12 Using pixels - line 217
 
-import numpy as np
-from math import sin, cos, hypot, atan2 #arctan of y/x in radians
+from math import hypot
 
-WIDTH, HEIGHT = 800, 1000
-BALL_RADIUS = 14
-GRAVITY = 0.42
-JUMP_VELOCITY = -8.5
-SPACING = 620 # between obstacles
-
-CYAN = (0, 231, 231)
-YELLOW = (255, 210, 0)
-PURPLE = (170, 70, 235)
-PINK = (255, 75, 160)
-GAME_COLORS = [CYAN, YELLOW, PURPLE, PINK]
+WIDTH, HEIGHT = 800, 1000   # window size in pixels
+BALL_RADIUS = 14            # radius of the player orb
+GRAVITY = 0.42             # downward speed added every frame
+JUMP_VELOCITY = -8.5       # upward speed on a tap (negative is up)
+SPACING = 620              # vertical distance between obstacles
 
 BAR_WIDTH = 460
 BAR_HEIGHT = 38
-BAR_SPEED = 2.7
-BAR_LEFT_LIMIT = 250 # leftmost center-x the bar can reach
-BAR_RIGHT_LIMIT = 550 # rightmost center-x the bar can reach
+BAR_SPEED = 2.7            # how fast the bar slides sideways
+BAR_LEFT_LIMIT = 250       # leftmost center the bar reaches
+BAR_RIGHT_LIMIT = 550      # rightmost center the bar reaches
 
-RING_SAMPLE_COUNT = 24
-RING_SAMPLE_RADIUS = BALL_RADIUS - 2
-SAME_COLOR_THRESHOLD_SQ = 5000
+RING_DIAMETER = 260
+RING_STROKE_WEIGHT = 18    # thickness of the ring band
 
-state = "start"
+CROSS_ARM_INNER = 90       # arm starts this far from the center
+CROSS_ARM_OUTER = 175      # arm ends this far from the center
+CROSS_ARM_WIDTH = 26
+
+DOUBLECROSS_OFFSET = 130   # how far each cross sits from center
+DC_ARM_INNER = 30
+DC_ARM_OUTER = 185
+DC_ARM_WIDTH = 24
+
+SQUARE_HALF_SIDE = 125     # half the square's edge length
+SQUARE_STROKE_WEIGHT = 16
+
+CHANGER_RADIUS = 20        # size of the color pickup
+
+CAMERA_OFFSET = 640        # how far below the view top the orb stays
+SPAWN_AHEAD = 300          # spawn obstacles this far above the view
+DESPAWN_MARGIN = 260       # delete obstacles this far below the view
+DEATH_MARGIN = 90          # orb dies once this far below the view
+INITIAL_SPAWN_Y = -540     # world-y of the first obstacle
+
+state = "start"            # "start", "play", or "over"
 score = 0
 high_score = 0
-difficulty_multiplier = 1.0
 
 player_x = WIDTH / 2
 player_y = 0.0
-player_vy = 0.0 # vertical velocity. positive is down
-player_color = 0 # index for GAME_COLORS
+player_vy = 0.0            # vertical velocity, positive is down
+player_color = 0           # index into GAME_COLORS
 
-camera_y = 0.0 # world-y of the top of the visible area
-spawn_y = 0.0 # world-y where the next obstacle will be placed
+camera_y = 0.0             # world-y of the top of the view
+spawn_y = 0.0             # world-y where the next obstacle spawns
 
 obstacles = []
 changers = []
-ball_img = None
 
-# return random color index that is different from current color
-def random_other_color(current_color):
-    new_color = int(random(4))
-    while new_color == current_color:
-        new_color = int(random(4))
-    return new_color
+# Skill 4 Working with setup and draw
+def setup():
+    global CYAN, YELLOW, PURPLE, PINK, GAME_COLORS
+    size(WIDTH, HEIGHT)
+    no_smooth()                 # crisp pixels so color collision matches exactly
+    color_mode(RGB, 255)
+    CYAN = color(0, 231, 231)
+    YELLOW = color(255, 210, 0)
+    PURPLE = color(170, 70, 235)
+    PINK = color(255, 75, 160)
+    GAME_COLORS = [CYAN, YELLOW, PURPLE, PINK]   # the four matchable colors
+    text_align(CENTER, CENTER)
+    reset_game()
+
+def draw():
+    if state == "start":
+        draw_start()
+    elif state == "play":
+        update_play()
+        draw_play()
+    else:
+        draw_over()
 
 # Skill 10 Creating and using classes
 class ColorChanger:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.radius = 20
-        self.used = False # True if collected
-        
-    # check touched
+        self.radius = CHANGER_RADIUS
+        self.used = False                                # True once collected
+        self.color_index = int(random(len(GAME_COLORS)))  # color the orb will become
+
     def try_trigger(self, ball_x, ball_y):
         global player_color, score
         if self.used:
             return
-        if hypot(ball_x - self.x, ball_y - self.y) < self.radius + BALL_RADIUS:
+        if hypot(ball_x - self.x, ball_y - self.y) < self.radius + BALL_RADIUS:  # orb overlaps pickup
             self.used = True
             score += 1
-            player_color = random_other_color(player_color)
+            player_color = self.color_index             # recolor the orb
 
-    # draw 2x2 color grid with center white dot
     def display(self):
-        if self.used:
+        if self.used:                                   # collected pickups vanish
             return
-        tile_size = self.radius
-        # Skill 11 Using transformations
-        push_matrix()
-        translate(self.x, self.y)
         no_stroke()
-        r, g, b = CYAN
-        fill(r, g, b)
-        square(-tile_size, -tile_size, tile_size)
-        r, g, b = YELLOW
-        fill(r, g, b)
-        square(0, -tile_size, tile_size)
-        r, g, b = PURPLE
-        fill(r, g, b)
-        square(-tile_size, 0, tile_size)
-        r, g, b = PINK
-        fill(r, g, b)
-        square(0, 0, tile_size)
-        stroke(255)
-        stroke_weight(4)
-        point(0, 0)
-        pop_matrix()
+        fill(GAME_COLORS[self.color_index])
+        square(self.x - self.radius, self.y - self.radius, self.radius * 2)
 
-# class to hold all obstacle types
 class Obstacle:
     KINDS = ["ring", "cross", "doublecross", "bar", "square"]
-
-    # how fast each obstacle type spins
     SPIN_SPEED = {
         "ring": 0.020,
         "cross": 0.024,
@@ -118,24 +122,23 @@ class Obstacle:
         self.x = x
         self.y = y
         self.kind = kind
-        self.rotation = random(TWO_PI) # random angle at start
-        self.center_x = WIDTH / 2 # bar's current horizontal position
-        self.direction = 1 # bar slide direction: +1 right, -1 left
+        self.rotation = random(TWO_PI)      # random starting spin angle
+        self.center_x = WIDTH / 2           # bar's current x (only the bar moves)
+        self.direction = 1                  # bar slide direction: 1 right, -1 left
 
     def update(self, difficulty):
-        # increment rotation and bar movement
-        self.rotation += self.SPIN_SPEED[self.kind] * difficulty
+        self.rotation += self.SPIN_SPEED[self.kind] * difficulty   # spin faster as score climbs
         if self.kind == "bar":
-            # slide left right and reverse directions
             self.center_x += self.direction * BAR_SPEED * difficulty
-            if self.center_x < BAR_LEFT_LIMIT:
-                self.center_x  = BAR_LEFT_LIMIT
+            if self.center_x < BAR_LEFT_LIMIT:      # hit left edge, turn around
+                self.center_x = BAR_LEFT_LIMIT
                 self.direction = 1
-            elif self.center_x > BAR_RIGHT_LIMIT:
-                self.center_x  = BAR_RIGHT_LIMIT
+            elif self.center_x > BAR_RIGHT_LIMIT:   # hit right edge, turn around
+                self.center_x = BAR_RIGHT_LIMIT
                 self.direction = -1
 
     def display(self):
+        # Skill 11 Using transformations
         push_matrix()
         if self.kind == "bar":
             translate(self.center_x, self.y)
@@ -148,8 +151,6 @@ class Obstacle:
                 self.draw_cross()
             elif self.kind == "doublecross":
                 self.draw_doublecross()
-            elif self.kind == "wheel":
-                self.draw_wheel()
             elif self.kind == "square":
                 self.draw_square()
         pop_matrix()
@@ -157,194 +158,108 @@ class Obstacle:
     def draw_ring(self):
         rotate(self.rotation)
         no_fill()
-        stroke_weight(18)
-        for segment_index in range(4):
-            r, g, b = GAME_COLORS[segment_index]
-            stroke(r, g, b)
-            # Skill 1: Drawing Functions
-            arc(0, 0, 260, 260, segment_index * HALF_PI, (segment_index + 1) * HALF_PI) # quarter circle arcs of different color
+        stroke_weight(RING_STROKE_WEIGHT)
+        for segment_index in range(len(GAME_COLORS)):   # one quarter-arc per color
+            stroke(GAME_COLORS[segment_index])
+            # Skill 1 Drawing Functions
+            arc(0, 0, RING_DIAMETER, RING_DIAMETER, segment_index * HALF_PI, (segment_index + 1) * HALF_PI)
 
     def draw_cross(self):
         rotate(self.rotation)
         no_stroke()
-        arm_inner_radius = 90
-        arm_outer_radius = 175
-        arm_width        = 26
-        for arm_index in range(4):
+        for arm_index in range(len(GAME_COLORS)):   # four arms, 90 degrees apart
             push_matrix()
             rotate(arm_index * HALF_PI)
-            r, g, b = GAME_COLORS[arm_index]
-            fill(r, g, b)
-            rect(arm_inner_radius, -arm_width / 2, arm_outer_radius - arm_inner_radius, arm_width)
+            fill(GAME_COLORS[arm_index])
+            rect(CROSS_ARM_INNER, -CROSS_ARM_WIDTH / 2, CROSS_ARM_OUTER - CROSS_ARM_INNER, CROSS_ARM_WIDTH)
             pop_matrix()
 
     def draw_doublecross(self):
-        color_sequence  = [0, 1, 2, 3]
-        mirror_colors = [color_sequence[2], color_sequence[1], color_sequence[0], color_sequence[3]]
-        self.draw_one_cross(-130, -self.rotation, color_sequence)
-        self.draw_one_cross( 130,  self.rotation, mirror_colors)
-        
+        color_sequence = [0, 1, 2, 3]
+        mirror_colors = [color_sequence[2], color_sequence[1], color_sequence[0], color_sequence[3]]  # reversed order
+        self.draw_one_cross(-DOUBLECROSS_OFFSET, -self.rotation, color_sequence)  # left cross, spins one way
+        self.draw_one_cross(DOUBLECROSS_OFFSET, self.rotation, mirror_colors)     # right cross, spins the other
+
     def draw_one_cross(self, x_offset, rotation, color_map):
-        # used by doublecross
         push_matrix()
-        translate(x_offset, 0)
+        translate(x_offset, 0)                      # shift this cross left or right
         rotate(rotation)
         no_stroke()
-        arm_inner_radius = 30
-        arm_outer_radius = 185
-        arm_width = 24
-        for arm_index in range(4):
+        for arm_index in range(len(GAME_COLORS)):
             push_matrix()
             rotate(arm_index * HALF_PI)
-            r, g, b = GAME_COLORS[color_map[arm_index]]
-            fill(r, g, b)
-            rect(arm_inner_radius, -arm_width / 2, arm_outer_radius - arm_inner_radius, arm_width)
+            fill(GAME_COLORS[color_map[arm_index]])
+            rect(DC_ARM_INNER, -DC_ARM_WIDTH / 2, DC_ARM_OUTER - DC_ARM_INNER, DC_ARM_WIDTH)
             pop_matrix()
         pop_matrix()
 
     def draw_bar(self):
-        segment_width = BAR_WIDTH / 4
+        segment_width = BAR_WIDTH / len(GAME_COLORS)   # width of each colored segment
         no_stroke()
-        for segment_index in range(4):
-            r, g, b = GAME_COLORS[segment_index]
-            fill(r, g, b)
+        for segment_index in range(len(GAME_COLORS)):
+            fill(GAME_COLORS[segment_index])
             rect(-BAR_WIDTH / 2 + segment_index * segment_width, -BAR_HEIGHT / 2, segment_width, BAR_HEIGHT)
 
     def draw_square(self):
         rotate(self.rotation)
-        half_side = 125
-        stroke_weight(16)
-        r, g, b = PINK
-        stroke(r, g, b)
-        line(-half_side, -half_side, half_side, -half_side) # top
-        r, g, b = CYAN
-        stroke(r, g, b)
-        line(half_side, -half_side, half_side, half_side) # right
-        r, g, b = YELLOW
-        stroke(r, g, b)
-        line(half_side, half_side, -half_side, half_side) # bottom
-        r, g, b = PURPLE
-        stroke(r, g, b)
-        line(-half_side, half_side, -half_side, -half_side) # left
+        half_side = SQUARE_HALF_SIDE
+        stroke_weight(SQUARE_STROKE_WEIGHT)
+        stroke(PINK)
+        line(-half_side, -half_side, half_side, -half_side)   # top edge
+        stroke(CYAN)
+        line(half_side, -half_side, half_side, half_side)     # right edge
+        stroke(YELLOW)
+        line(half_side, half_side, -half_side, half_side)     # bottom edge
+        stroke(PURPLE)
+        line(-half_side, half_side, -half_side, -half_side)   # left edge
 
-# return the shortest distance from a point to a line segment
-def point_segment_distance(point_x, point_y, seg_x1, seg_y1, seg_x2, seg_y2):
-    delta_x = seg_x2 - seg_x1
-    delta_y = seg_y2 - seg_y1
-    if delta_x == 0 and delta_y == 0: # horizontal or vertical line
-        return hypot(point_x - seg_x1, point_y - seg_y1)
-    # project point onto the segment and clamp to [0, 1] so we stay on it
-    projection = max(0, min(1, ((point_x - seg_x1) * delta_x + (point_y - seg_y1) * delta_y)
-                               / float(delta_x * delta_x + delta_y * delta_y)))
-    nearest_x = seg_x1 + projection * delta_x
-    nearest_y = seg_y1 + projection * delta_y
-    return hypot(point_x - nearest_x, point_y - nearest_y)
-
-# return true if touching different color
 def orb_hits_obstacle():
-    ball_x = player_x
-    ball_y = player_y
-
-    for obstacle in obstacles:
-        if obstacle.kind == "ring":
-            distance = hypot(ball_x - obstacle.x, ball_y - obstacle.y)
-            if 121 - BALL_RADIUS <= distance <= 139 + BALL_RADIUS:
-                angle = (atan2(ball_y - obstacle.y, ball_x - obstacle.x) - obstacle.rotation) % TWO_PI
-                color_index = int(angle / HALF_PI) % 4
-                if color_index != player_color:
-                    return True
-
-        elif obstacle.kind == "bar":
-            bar_left = obstacle.center_x - BAR_WIDTH / 2
-            bar_top = obstacle.y - BAR_HEIGHT / 2
-            in_x_range = bar_left - BALL_RADIUS <= ball_x <= bar_left + BAR_WIDTH  + BALL_RADIUS
-            in_y_range = bar_top  - BALL_RADIUS <= ball_y <= bar_top  + BAR_HEIGHT + BALL_RADIUS
-            if in_x_range and in_y_range:
-                segment_index = int((ball_x - bar_left) / (BAR_WIDTH / 4))
-                segment_index = max(0, min(3, segment_index))
-                if segment_index != player_color:
-                    return True
-                
-        elif obstacle.kind == "square":
-            # rotate ball into square plane
-            neg_rotation = -obstacle.rotation
-            local_x = (ball_x - obstacle.x) * cos(neg_rotation) - (ball_y - obstacle.y) * sin(neg_rotation)
-            local_y = (ball_x - obstacle.x) * sin(neg_rotation) + (ball_y - obstacle.y) * cos(neg_rotation)
-            square_sides = [
-                ((-125, -125), ( 125, -125), 3), # top: pink
-                (( 125, -125), ( 125,  125), 0), # right: cyan
-                (( 125,  125), (-125,  125), 1), # bottom: yellow
-                ((-125,  125), (-125, -125), 2), # left: purple
-            ]
-            for side_start, side_end, side_color_index in square_sides:
-                distance = point_segment_distance(local_x, local_y,
-                                                  side_start[0], side_start[1],
-                                                  side_end[0],   side_end[1])
-                if distance <= BALL_RADIUS + 8:
-                    if side_color_index != player_color:
-                        return True
-
-        elif obstacle.kind == "cross":
-            # rotate then check each arm
-            neg_rotation = -obstacle.rotation
-            local_x = (ball_x - obstacle.x) * cos(neg_rotation) - (ball_y - obstacle.y) * sin(neg_rotation)
-            local_y = (ball_x - obstacle.x) * sin(neg_rotation) + (ball_y - obstacle.y) * cos(neg_rotation)
-            for arm_index in range(4):
-                arm_angle   = -arm_index * HALF_PI
-                arm_local_x = local_x * cos(arm_angle) - local_y * sin(arm_angle)
-                arm_local_y = local_x * sin(arm_angle) + local_y * cos(arm_angle)
-                if 90 - BALL_RADIUS <= arm_local_x <= 175 + BALL_RADIUS and abs(arm_local_y) <= 13 + BALL_RADIUS:
-                    if arm_index != player_color:
-                        return True
-
-        elif obstacle.kind == "doublecross":
-            color_sequence  = [0, 1, 2, 3]
-            mirror_colors = [2, 1, 0, 3]
-            # check both crosses
-            cross_configs = (
-                (obstacle.x - 130, -obstacle.rotation, color_sequence),
-                (obstacle.x + 130,  obstacle.rotation, mirror_colors),
-            )
-            for cross_center_x, cross_rotation, color_map in cross_configs:
-                neg_rotation = -cross_rotation
-                local_x = (ball_x - cross_center_x) * cos(neg_rotation) - (ball_y - obstacle.y) * sin(neg_rotation)
-                local_y = (ball_x - cross_center_x) * sin(neg_rotation) + (ball_y - obstacle.y) * cos(neg_rotation)
-                for arm_index in range(4):
-                    arm_angle   = -arm_index * HALF_PI
-                    arm_local_x = local_x * cos(arm_angle) - local_y * sin(arm_angle)
-                    arm_local_y = local_x * sin(arm_angle) + local_y * cos(arm_angle)
-                    if 30 - BALL_RADIUS <= arm_local_x <= 185 + BALL_RADIUS and abs(arm_local_y) <= 12 + BALL_RADIUS:
-                        if color_map[arm_index] != player_color:
-                            return True
-
+    # Skill 12 Using pixels
+    load_np_pixels()
+    pixels_copy = np_pixels.copy()          # snapshot of the screen (obstacles only)
+    center_x = int(player_x)
+    center_y = int(player_y - camera_y)     # orb's on-screen position
+    orb_color = GAME_COLORS[player_color]
+    orb_r = int(red(orb_color))             # pull the orb's r/g/b back out of the color
+    orb_g = int(green(orb_color))
+    orb_b = int(blue(orb_color))
+    for y in range(center_y - BALL_RADIUS, center_y + BALL_RADIUS + 1):
+        if y < 0 or y >= height:            # skip rows off the screen
+            continue
+        for x in range(center_x - BALL_RADIUS, center_x + BALL_RADIUS + 1):
+            if x < 0 or x >= width:         # skip columns off the screen
+                continue
+            if (x - center_x) ** 2 + (y - center_y) ** 2 > BALL_RADIUS ** 2:  # only the round orb area
+                continue
+            r = int(pixels_copy[y, x, 1])   # np_pixels is ARGB, so 1,2,3 are r,g,b
+            g = int(pixels_copy[y, x, 2])
+            b = int(pixels_copy[y, x, 3])
+            if (r, g, b) != (0, 0, 0) and (r, g, b) != (orb_r, orb_g, orb_b):  # not background, not orb color
+                return True
     return False
 
 def make_obstacle(y):
-    kind = Obstacle.KINDS[int(random(len(Obstacle.KINDS)))]
+    kind = Obstacle.KINDS[int(random(len(Obstacle.KINDS)))]   # pick a random shape
     obstacles.append(Obstacle(WIDTH / 2, y, kind))
 
-
 def fill_world():
-    # generates obstacles into array
     global spawn_y
-    while spawn_y > camera_y - 300:
+    while spawn_y > camera_y - SPAWN_AHEAD:      # keep filling until far enough above the view
         make_obstacle(spawn_y)
-        changers.append(ColorChanger(WIDTH / 2, spawn_y + SPACING / 2))
-        spawn_y -= SPACING
+        changers.append(ColorChanger(WIDTH / 2, spawn_y + SPACING / 2))   # pickup halfway below
+        spawn_y -= SPACING                      # next obstacle goes higher up
 
 def reset_game():
-    global player_x, player_y, player_vy, player_color, camera_y
-    global score, difficulty_multiplier, spawn_y, obstacles, changers
+    global player_x, player_y, player_vy, player_color, camera_y, score, spawn_y, obstacles, changers
     player_x = WIDTH / 2
     player_y = 0.0
     player_vy = 0.0
-    player_color = int(random(4))
-    camera_y = player_y - 640
-    score  = 0
-    difficulty_multiplier = 1.0
+    player_color = int(random(len(GAME_COLORS)))   # random starting color
+    camera_y = player_y - CAMERA_OFFSET
+    score = 0
     obstacles = []
     changers = []
-    spawn_y = -540
+    spawn_y = INITIAL_SPAWN_Y
     fill_world()
 
 def start_game():
@@ -357,72 +272,40 @@ def die():
     if state != "play":
         return
     state = "over"
-    high_score = max(high_score, score)
-
+    high_score = max(high_score, score)         # keep the best score
 
 def do_jump():
     global player_vy
-    player_vy = JUMP_VELOCITY
-
-def make_ball_image():
-    diameter = 2 * BALL_RADIUS
-    img = create_image(diameter, diameter, ARGB)
-    img.load_np_pixels()
-
-    radius_squar = BALL_RADIUS * BALL_RADIUS
-
-    # create ball image
-    for row in range(diameter):
-        for col in range(diameter):
-            dist_from_center_sq = (col - BALL_RADIUS) * (col - BALL_RADIUS) + \
-                                  (row - BALL_RADIUS) * (row - BALL_RADIUS)
-            if dist_from_center_sq <= radius_squar:
-                img.np_pixels[row, col, 0] = 255 # alpha
-            else:
-                img.np_pixels[row, col, 0] = 0
-            # Skill 12 Using pixels
-            img.np_pixels[row, col, 1] = 255  # r
-            img.np_pixels[row, col, 2] = 255  # g
-            img.np_pixels[row, col, 3] = 255  # b
-
-    img.update_np_pixels()
-    return img
-
+    player_vy = JUMP_VELOCITY                    # fixed upward push
 
 def draw_player():
-    r, g, b = GAME_COLORS[player_color]
-    tint(r, g, b)
-    diameter = 2 * BALL_RADIUS
-    image(ball_img, player_x - BALL_RADIUS, player_y - BALL_RADIUS, diameter, diameter)
-    no_tint()
+    no_stroke()
+    fill(GAME_COLORS[player_color])
+    circle(player_x, player_y, 2 * BALL_RADIUS)  # orb is just a colored circle now
 
 def draw_hud():
     fill(255)
     text_size(26)
     text_align(LEFT, TOP)
-    text("Score: " + str(score), 18, 16)
-    text("High: " + str(high_score), 18, 48)
-    no_stroke()
-    r, g, b = GAME_COLORS[player_color]
-    fill(r, g, b)
-    ellipse(WIDTH - 42, 36, 34, 34)
+    text("Score: " + str(score), 18, 16)          # current score, top-left
+    text("High: " + str(high_score), 18, 48)       # best score below it
 
 def draw_title(center_x, center_y):
     label = "COLOR JUMP"
     text_size(76)
     total_text_width = 0
     for character in label:
-        total_text_width += text_width(character)
+        total_text_width += text_width(character)   # measure so we can center it
     current_x = center_x - total_text_width / 2
     text_align(LEFT, CENTER)
     # Skill 3 Using Colors
-    color_mode(HSB, 360, 100, 100)
+    color_mode(HSB, 360, 100, 100)                  # switch to hue-based color
     for char_index, character in enumerate(label):
         # Skill 2 Controlling Color State
-        fill(char_index * 360 / len(label), 85, 100)
+        fill(char_index * 360 / len(label), 85, 100)   # each letter a different hue
         text(character, current_x, center_y)
-        current_x += text_width(character)
-    color_mode(RGB, 255)
+        current_x += text_width(character)          # advance past this letter
+    color_mode(RGB, 255)                            # back to normal color mode
 
 def draw_start():
     background(0)
@@ -440,105 +323,62 @@ def draw_over():
     text("GAME OVER", WIDTH / 2, 330)
     fill(255)
     text_size(36)
-    text("Score: "      + str(score),      WIDTH / 2, 440)
+    text("Score: " + str(score), WIDTH / 2, 440)
     text("High Score: " + str(high_score), WIDTH / 2, 490)
     text_size(26)
     text("Press R to Restart", WIDTH / 2, 580)
 
+def keep_visible(items, despawn_y):
+    kept = []
+    for item in items:
+        if item.y < despawn_y:          # drop anything past the bottom margin
+            kept.append(item)
+    return kept
+
 def update_play():
-    global player_vy, player_y, camera_y, difficulty_multiplier, obstacles, changers
-
-    # gravity
-    player_vy += GRAVITY
-    player_y  += player_vy
-
-    # move screen up
-    if player_y - 640 < camera_y:
-        camera_y = player_y - 640
-
-    fill_world()
-
-    # remove obstacles
-    despawn_y = camera_y + HEIGHT + 260
-    new_obstacles = []
+    global player_vy, player_y, camera_y, obstacles, changers
+    player_vy += GRAVITY                # gravity speeds up the fall
+    player_y += player_vy
+    camera_y = min(camera_y, player_y - CAMERA_OFFSET)   # view only ever rises with the orb
+    fill_world()                        # top up obstacles above the view
+    despawn_y = camera_y + HEIGHT + DESPAWN_MARGIN
+    obstacles = keep_visible(obstacles, despawn_y)
+    changers = keep_visible(changers, despawn_y)
     for obstacle in obstacles:
-        if obstacle.y < despawn_y:
-            new_obstacles.append(obstacle)
-    obstacles = new_obstacles
-
-    new_changers = []
+        obstacle.update(1 + score * 0.07)   # speed ramps up with score
     for changer in changers:
-        if changer.y < despawn_y:
-            new_changers.append(changer)
-    changers = new_changers
-
-    # animate obstacles
-    for obstacle in obstacles:
-        obstacle.update(difficulty_multiplier)
-
-    # increase difficulty per score
-    difficulty_multiplier = 1.0 + min(score // 10, 8) * 0.07
-
-    for changer in changers:
-        changer.try_trigger(player_x, player_y)
-        
-    if player_y - camera_y > HEIGHT + 90:
+        changer.try_trigger(player_x, player_y)   # collect any touched pickup
+    if player_y - camera_y > HEIGHT + DEATH_MARGIN:   # fell off the bottom
         die()
-
 
 def draw_play():
     background(0)
-
-    # draw obstacles
     push_matrix()
-    translate(0, -camera_y)
+    translate(0, -camera_y)             # shift world so the camera follows the orb
     for obstacle in obstacles:
         obstacle.display()
     pop_matrix()
-
-    # collisions
-    if orb_hits_obstacle():
+    if orb_hits_obstacle():             # check pixels before drawing orb/pickups
         die()
-
-    # color change
     push_matrix()
     translate(0, -camera_y)
     for changer in changers:
         changer.display()
     draw_player()
     pop_matrix()
-
-    draw_hud()
-
-# Skill 4 Working with setup and draw
-def setup():
-    global ball_img
-    size(WIDTH, HEIGHT)
-    color_mode(RGB, 255)
-    text_align(CENTER, CENTER)
-    ball_img = make_ball_image()
-    reset_game()
-
-def draw():
-    if state == "start":
-        draw_start()
-    elif state == "play":
-        update_play()
-        draw_play()
-    else:
-        draw_over()
+    draw_hud()                          # HUD drawn last, unshifted by the camera
 
 # Skill 5 Events
 def key_pressed():
-    if state == "start" and key == ' ':
+    if state == "start" and key == ' ':                  # SPACE begins the game
         start_game()
-    elif state == "play" and key == ' ':
+    elif state == "play" and key == ' ':                 # SPACE jumps while playing
         do_jump()
-    elif state == "over" and (key == 'r' or key == 'R'):
+    elif state == "over" and (key == 'r' or key == 'R'):  # R restarts after dying
         start_game()
 
 def mouse_pressed():
     if state == "play":
-        do_jump()
+        do_jump()                                        # click also jumps
     else:
-        start_game()
+        start_game()                                     # click starts/restarts
