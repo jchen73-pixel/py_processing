@@ -1,12 +1,12 @@
-# Skill 1 Drawing Functions - line 164
-# Skill 2 Controlling Color State - line 304
-# Skill 3 Using Colors - line 301
-# Skill 4 Working with setup and draw - line 63
-# Skill 5 Events - line 371
+# Skill 1 Drawing Functions - line 163
+# Skill 2 Controlling Color State - line 299
+# Skill 3 Using Colors - line 296
+# Skill 4 Working with setup and draw - line 62
+# Skill 5 Events - line 366
 # Skill 9 Moving shapes - waived
-# Skill 10 Creating and using classes - line 86
-# Skill 11 Using transformations - line 141
-# Skill 12 Using pixels - line 217
+# Skill 10 Creating and using classes - line 85
+# Skill 11 Using transformations - line 140
+# Skill 12 Using pixels - line 209
 
 from math import hypot
 
@@ -30,7 +30,6 @@ CROSS_ARM_OUTER = 175 # arm ends this far from the center
 CROSS_ARM_WIDTH = 26
 
 DOUBLECROSS_OFFSET = 130 # how far each cross sits from center
-DC_ARM_INNER = 30
 DC_ARM_OUTER = 185
 DC_ARM_WIDTH = 24
 
@@ -64,13 +63,13 @@ changers = []
 def setup():
     global CYAN, YELLOW, PURPLE, PINK, GAME_COLORS
     size(WIDTH, HEIGHT)
-    no_smooth() # hard edges so collision pixels are pure colors, not blended
+    no_smooth() # actually lets collisions work by making pixels definitive color
     color_mode(RGB, 255)
     CYAN = color(0, 231, 231)
     YELLOW = color(255, 210, 0)
     PURPLE = color(170, 70, 235)
     PINK = color(255, 75, 160)
-    GAME_COLORS = [CYAN, YELLOW, PURPLE, PINK] # the four matchable colors
+    GAME_COLORS = [CYAN, YELLOW, PURPLE, PINK] # the four colors
     text_align(CENTER, CENTER)
     reset_game()
 
@@ -113,9 +112,9 @@ class Obstacle:
     SPIN_SPEED = {
         "ring": 0.020,
         "cross": 0.024,
-        "doublecross": 0.030,
+        "doublecross": 0.03,
         "bar": 0.0,
-        "square": 0.020,
+        "square": 0.02,
     }
 
     def __init__(self, x, y, kind):
@@ -165,31 +164,24 @@ class Obstacle:
             arc(0, 0, RING_DIAMETER, RING_DIAMETER, segment_index * HALF_PI, (segment_index + 1) * HALF_PI)
 
     def draw_cross(self):
-        rotate(self.rotation)
-        no_stroke()
-        for arm_index in range(len(GAME_COLORS)): # four arms, 90 degrees apart
-            push_matrix()
-            rotate(arm_index * HALF_PI)
-            fill(GAME_COLORS[arm_index])
-            rect(CROSS_ARM_INNER, -CROSS_ARM_WIDTH / 2, CROSS_ARM_OUTER - CROSS_ARM_INNER, CROSS_ARM_WIDTH)
-            pop_matrix()
+        # single cross: center gap (inner > 0) so the orb can pass straight through the middle
+        self.draw_one_cross(0, self.rotation, CROSS_ARM_INNER, CROSS_ARM_OUTER, CROSS_ARM_WIDTH, [0, 1, 2, 3])
 
     def draw_doublecross(self):
-        color_sequence = [0, 1, 2, 3]
-        mirror_colors = [color_sequence[2], color_sequence[1], color_sequence[0], color_sequence[3]] # reversed order
-        self.draw_one_cross(-DOUBLECROSS_OFFSET, -self.rotation, color_sequence) # left cross, spins one way
-        self.draw_one_cross(DOUBLECROSS_OFFSET, self.rotation, mirror_colors) # right cross, spins the other
+        # two offset crosses the orb threads between, so arms reach all the way to center (inner = 0)
+        self.draw_one_cross(-DOUBLECROSS_OFFSET, -self.rotation, 0, DC_ARM_OUTER, DC_ARM_WIDTH, [0, 1, 2, 3]) # left cross, spins one way
+        self.draw_one_cross(DOUBLECROSS_OFFSET, self.rotation, 0, DC_ARM_OUTER, DC_ARM_WIDTH, [2, 1, 0, 3]) # right cross, mirrored colors, spins the other
 
-    def draw_one_cross(self, x_offset, rotation, color_map):
+    def draw_one_cross(self, x_offset, rotation, inner, outer, arm_width, color_map):
         push_matrix()
         translate(x_offset, 0) # shift this cross left or right
         rotate(rotation)
         no_stroke()
-        for arm_index in range(len(GAME_COLORS)):
+        for arm_index in range(len(GAME_COLORS)): # four arms, 90 degrees apart
             push_matrix()
             rotate(arm_index * HALF_PI)
             fill(GAME_COLORS[color_map[arm_index]])
-            rect(DC_ARM_INNER, -DC_ARM_WIDTH / 2, DC_ARM_OUTER - DC_ARM_INNER, DC_ARM_WIDTH)
+            rect(inner, -arm_width / 2, outer - inner, arm_width)
             pop_matrix()
         pop_matrix()
 
@@ -217,8 +209,8 @@ def orb_hits_obstacle():
     # Skill 12 Using pixels
     load_np_pixels()
     pixels_copy = np_pixels.copy() # snapshot of the screen (obstacles only)
-    pixel_h, pixel_w = pixels_copy.shape[0], pixels_copy.shape[1]
-    density = pixel_h // height # np_pixels is bigger than the window on high-DPI displays
+    pixel_h, pixel_w = pixel_height, pixel_width # actual pixel-buffer size, bigger than the window on high-DPI displays
+    density = pixel_h // height
     center_x = int(player_x * density)
     center_y = int((player_y - camera_y) * density) # orb's on-screen position
     radius = BALL_RADIUS * density
